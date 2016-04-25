@@ -1,25 +1,69 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducible Research Assignment 1"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-## Loading and preprocessing the data
+## 1.Code for reading in the dataset and/or processing the data
 
+```{r data, echo=TRUE}
+data <- read.csv('activity.csv')
+```
 
+## 2. Histogram of the total number of steps taken each day
 
-## What is mean total number of steps taken per day?
+```{r echo=TRUE}
+steps <- tapply(data$steps, data$date, sum)
+hist(steps, breaks=50)
+```
 
+## 3. Mean and median number of steps taken each day
+```{r echo=TRUE}
+mean(steps, na.rm=TRUE)
+median(steps, na.rm=TRUE)
+```
 
+## 4. Time series plot of the average number of steps taken
+```{r echo=TRUE}
+aveSteps <- aggregate(x=list(steps=data$steps),
+                      by=list(interval=data$interval),
+                      mean,
+                      na.rm=TRUE)
+plot(aveSteps, type='l')
+```
 
-## What is the average daily activity pattern?
+## 5. The 5-minute interval that, on average, contains the maximum number of steps
+```{r echo=TRUE}
+aveSteps[which.max(aveSteps$steps), ]
+```
 
+## 6. Code to describe and show a strategy for imputing missing data
+```{r echo=TRUE}
+missingData <- is.na(data$steps)
+table(missingData)
+```
 
+## 7. Histogram of the total number of steps taken each day after missing values are imputed
+```{r echo=TRUE}
+dataRmMiss <- data[!missingData,]
+stepsRmMiss <- tapply(dataRmMiss$steps, dataRmMiss$date, sum)
+hist(stepsRmMiss, breaks=50)
+```
 
-## Imputing missing values
+## 8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+```{r echo=TRUE}
+dataRmMiss$day <- 'weekdays'
+dataRmMiss$day[weekdays(as.Date(dataRmMiss$date), abb=TRUE) %in% c('Sat', 'Sun')] <- 'weekends'
+aveStepsWeek <- aggregate(x=list(steps=dataRmMiss$steps),
+                          by=list(interval=dataRmMiss$interval, day=dataRmMiss$day),
+                          mean,
+                          na.rm=TRUE)
 
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+library(lattice)
+xyplot(steps ~ interval | day, data=aveStepsWeek, type='l', 
+       grid=TRUE, layout=c(1,2),
+       ylab='steps', xlab='intervals')
+```
